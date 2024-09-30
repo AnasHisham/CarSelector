@@ -1,0 +1,198 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+
+<div id="overlay">
+    <div id="loader-message">Loading...</div>
+</div>
+
+<h2>Select Car</h2>
+
+<form id="car-form" style="padding-bottom:10px">
+    <div class="form-group">
+        <label for="make">Car Make</label>
+        <select class="form-select form-select-sm" id="make"><option>Select Car Make</option></select>
+    </div>
+    <div class="form-group" style="padding-top:8px">
+        <label for="vehicleType">Vehicle Type</label>
+        <select class="form-select form-select-sm" id="vehicleType"></select>
+    </div>
+    <div class="form-group" style="padding-top:8px">
+        <label for="year">Manufacture Year</label>
+        <input type="number" class="form-control" id="year" placeholder="Manufacture Year">
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Get Models</button>
+</form>
+
+
+
+<table id="vehicleTable">
+    <thead>
+        <tr>
+            <th>Make Id</th>
+            <th>Make Name</th>
+            <th>Model ID</th>
+            <th>Model Name</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Data will be populated here -->
+    </tbody>
+</table>
+<div class="pagination" id="pagination"></div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
+
+<script>
+
+    $('#make').select2({
+        selectOnClose: true
+    });
+
+
+    $('#vehicleType').select2({
+        selectOnClose: true
+    });
+
+    const itemsPerPage = 10;
+    let currentPage = 1;
+
+    window.onload = async function () {
+        await loadMakes();
+    };
+
+    async function loadMakes() {
+
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'block'; // Show the loader
+
+        try {
+
+            const response = await fetch('/api/car/getMakes');
+            const data = await response.json();
+            const makeSelect = document.getElementById("make");
+            data.Results.forEach(make => {
+                const option = document.createElement("option");
+                option.value = make.Make_ID;
+                option.text = make.Make_Name;
+                makeSelect.appendChild(option);
+            });
+        }
+        catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            overlay.style.display = 'none'; // Hide the loader
+        }
+
+    }
+    document.getElementById("make").onchange = async function (event) {
+
+        event.preventDefault();
+        document.getElementById("vehicleType").innerHTML = "";
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'block'; // Show the loader
+        const makeId = document.getElementById("make").value;
+      
+        try {
+            const response = await fetch('/api/car/GetVehicleTypes/' + makeId)
+            const data = await response.json();
+            const vehicleTypeSelect = document.getElementById("vehicleType");
+            data.Results.forEach(vehicleType => {
+                const option = document.createElement("option");
+                option.value = vehicleType.VehicleTypeId;
+                option.text = vehicleType.VehicleTypeName;
+                vehicleTypeSelect.appendChild(option);
+            });
+        }
+        catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            overlay.style.display = 'none'; // Hide the loader
+        }
+
+
+    }
+
+    document.getElementById("car-form").onsubmit = async function (event) {
+        
+        event.preventDefault();
+        const overlay = document.getElementById('overlay');
+        overlay.style.display = 'block'; // Show the loader
+        currentPage = 1;
+
+        try {
+
+            const makeId = document.getElementById("make").value;
+            const year = document.getElementById("year").value;
+            const vehicleType = document.getElementById("vehicleType").value;
+
+            if (makeId == "Select Car Make" || year == "" || vehicleType == "") {
+                alert("Please Fill Input");
+                return;
+            }
+
+            const response = await fetch(`/api/car/getModels/${makeId}/${year}/${vehicleType}`);
+            const data = await response.json();
+            if (JSON.stringify(data.Results, null, 2) != "[]") {
+                // document.getElementById("models").innerHTML = JSON.stringify(data.Results, null, 2);
+                populateTable(data.Results);
+                renderPagination(data.Results);
+            }
+            else {
+                document.getElementById("models").innerHTML = "No Data !";
+
+            }
+        }
+        catch (e) {
+            alert(e); // Logs the error
+        } finally {
+            overlay.style.display = 'none'; // Hide the loader
+        }
+
+    };
+
+    function populateTable(models) {
+
+        const tableBody = document.getElementById('vehicleTable').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = ''; // Clear any existing rows
+
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginatedModels = models.slice(start, end);
+
+        paginatedModels.forEach(model => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = model.Make_ID;
+            row.insertCell(1).textContent = model.Make_Name;
+            row.insertCell(2).textContent = model.Model_ID;
+            row.insertCell(3).textContent = model.Model_Name;
+
+        });
+
+
+    }
+
+    function renderPagination(models) {
+        const paginationDiv = document.getElementById('pagination');
+        paginationDiv.innerHTML = ''; // Clear existing pagination
+
+        const totalPages = Math.ceil(models.length / itemsPerPage);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const button = document.createElement('button');
+            button.textContent = i;
+            button.onclick = () => {
+                currentPage = i;
+                populateTable(models);
+            };
+            paginationDiv.appendChild(button);
+        }
+    }
+
+</script>

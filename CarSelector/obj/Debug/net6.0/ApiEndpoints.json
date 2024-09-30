@@ -1,0 +1,54 @@
+[
+  {
+    "ContainingType": "CarSelector.Controllers.CarController",
+    "Method": "GetMakes",
+    "RelativePath": "api/Car/getMakes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CarSelector.Controllers.CarController",
+    "Method": "GetModels",
+    "RelativePath": "api/Car/getModels/{makeId}/{year}/{vehicleType}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "makeId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "year",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "vehicleType",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CarSelector.Controllers.CarController",
+    "Method": "GetVehicleTypes",
+    "RelativePath": "api/Car/getVehicleTypes/{makeId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "makeId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
